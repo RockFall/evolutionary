@@ -1,10 +1,12 @@
 from .config import ExperimentConfigGroup
+from .result import ExperimentResult
 from tqdm.auto import tqdm
 import copy
 
 class Experiment:
-    def __init__(self, namespace="experiment", backup_folder=None, save_backup=False):
+    def __init__(self, problem_type="regression", namespace="experiment", backup_folder=None, save_backup=False):
         self.namespace = namespace
+        self.problem_type = problem_type
         self.solver = None
         #self.dataset = None
         self.X_train = None
@@ -14,7 +16,7 @@ class Experiment:
 
         self._default_config_indices = []
         self.configurations = []  # ExperimentConfigGroup list
-        self.results = []
+        self.results = ExperimentResult()
 
         self._current_configuration_group_idx = 0  # Para controle de interrupções
         self._current_configuration_idx = 0  # Para controle de interrupções
@@ -25,7 +27,7 @@ class Experiment:
         self.backup_file = f"{namespace}_backup.pkl"
         #self.overwrite_backup = overwrite_backup
 
-    def setup(self, solver, X_train, y_train, X_test, y_test, namespace=None, backup_folder=None, save_backup=False, custom_params=None):
+    def setup(self, solver, X_train, y_train, X_test, y_test, problem_type=None, namespace=None, backup_folder=None, save_backup=False, custom_params=None):
         self.solver = solver
         #self.dataset = dataset
         self.X_train = X_train
@@ -39,6 +41,8 @@ class Experiment:
         self._current_absolute_idx = 0
 
         self.namespace = namespace if namespace else self.namespace
+        self.problem_type = problem_type if problem_type else self.problem_type
+
         self.save_backup = save_backup if save_backup else self.save_backup
         self.backup_folder = backup_folder if backup_folder else self.backup_folder
         self.backup_file = f"{namespace}_backup.pkl"
@@ -100,6 +104,9 @@ class Experiment:
     def _run_configuration(self, config):
         n_iterations = config['n_iterations_per_config']
         # Barra de progresso para Iterações
+
+        id_config = self.results.start_configuration(config)
+
         with tqdm(total=n_iterations, desc="Iterations", position=1, leave=False) as iter_pbar:
             for iteration in range(n_iterations):
                 iter_pbar.update(1)
@@ -114,23 +121,10 @@ class Experiment:
                 prediction = solver.predict(self.X_test)
 
                 # Metrics
-                from sklearn.metrics import mean_squared_error
-                mse = mean_squared_error(self.y_test, prediction)
-                metrics = solver.get_metrics() if hasattr(solver, 'get_metrics') else {}
+                self.results.add_iteration(id_config, solver, prediction, self.y_test)
 
-                # Armazena o resultado
-                result = {
-                    'config': config.copy(),
-                    'iteration': iteration + 1,
-                    'mse': mse,
-                    'metrics': metrics,
-                    # Adicione outras métricas ou informações conforme necessário
-                }
-                self.results.append(result)
-
-        # Após todas as iterações, você pode imprimir o resultado geral da configuração
-        avg_rmse = sum(r['mse'] for r in self.results[-n_iterations:]) / n_iterations
-        #print(f"Configuração {config_idx + 1}: RMSE médio = {avg_rmse:.4f}")
+        self.results.end_configuration(id_config)
+                
 
     def get_results(self):
         return self.results

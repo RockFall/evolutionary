@@ -2,7 +2,7 @@ import numpy as np
 
 
 class CFG:
-    def __init__(self, grammar, X_size=2, max_tree_depth=None, min_tree_depth=None, shortest_path=None):
+    def __init__(self, grammar, n_features=2, max_tree_depth=None, min_tree_depth=None, shortest_path=None):
         self.grammar = grammar
         self.max_tree_depth = max_tree_depth
         self.min_tree_depth = min_tree_depth
@@ -12,7 +12,7 @@ class CFG:
         self.terminals = grammar['<op>'] + grammar['<var>']
         self.start_rule = '<start>'
         self.start_rule_tuple = ('<start>', 'NT')
-        self.n_options_by_non_terminal = {'<start>': 1, '<expr>': 3, '<op>': X_size+5, '<var>': 2}
+        self.n_options_by_non_terminal = {'<start>': 1, '<expr>': 3, '<op>': n_features+5, '<var>': 2}
 
         self.index_of_non_terminal = {}
         self.gen_pcfg()

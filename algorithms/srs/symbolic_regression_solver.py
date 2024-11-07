@@ -7,8 +7,8 @@ from srs.util import _protected_division
 
 
 class SymbolicRegressionSolver:
-    def __init__(self, X_size=2, pop_size=100, max_generations=30, max_tree_depth=7, min_tree_depth=2, crossover_rate=0.9, mutation_rate=0.05, elitism_size=10, tournament_size=2):
-        self.evolutionary_alg = EvolutionaryAlg(X_size, 
+    def __init__(self, n_features=2, pop_size=100, max_generations=30, max_tree_depth=7, min_tree_depth=2, crossover_rate=0.9, mutation_rate=0.05, elitism_size=10, tournament_size=2):
+        self.evolutionary_alg = EvolutionaryAlg(n_features, 
                                                 pop_size, 
                                                 max_generations, 
                                                 max_tree_depth, 
@@ -20,8 +20,8 @@ class SymbolicRegressionSolver:
         
         self.results = []
 
-    def set_params(self, X_size=2, pop_size=100, n_generations=30, max_tree_depth=7, min_tree_depth=2, crossover_rate=0.9, mutation_rate=0.05, elitism_size=10, tournament_size=2, **kwargs):
-        self.evolutionary_alg = EvolutionaryAlg(X_size, 
+    def set_params(self, n_features=2, pop_size=100, n_generations=30, max_tree_depth=7, min_tree_depth=2, crossover_rate=0.9, mutation_rate=0.05, elitism_size=10, tournament_size=2, **kwargs):
+        self.evolutionary_alg = EvolutionaryAlg(n_features, 
                                                 pop_size, 
                                                 n_generations, 
                                                 max_tree_depth, 

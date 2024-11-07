@@ -15,7 +15,7 @@ class ExperimentConfigGroup:
         tournament_size=None,
         min_tree_depth=None,
         max_tree_depth=None,
-        X_size=None
+        n_features=None
         # Adicione outros hiperparâmetros possíveis aqui
         # Cada um com valor padrão None ou um valor específico
     ):
@@ -37,7 +37,7 @@ class ExperimentConfigGroup:
         self.tournament_size = tournament_size
         self.min_tree_depth = min_tree_depth
         self.max_tree_depth = max_tree_depth
-        self.X_size = X_size
+        self.n_features = n_features
         # Adicione outros hiperparâmetros aqui
 
         # Validar os parâmetros

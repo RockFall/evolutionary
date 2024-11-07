@@ -14,7 +14,7 @@ class EvolutionaryAlg:
             return 1
         return x / y
 
-    def __init__(self, X_size=2, pop_size=100, max_generations=30, max_tree_depth=7, min_tree_depth=2, crossover_rate=0.9, mutation_rate=0.05, elitism_size=10, tournament_size=2):
+    def __init__(self, n_features=2, pop_size=100, max_generations=30, max_tree_depth=7, min_tree_depth=2, crossover_rate=0.9, mutation_rate=0.05, elitism_size=10, tournament_size=2):
         # Loading parameters
         self.params = {}
         self.params["POP_SIZE"] = pop_size
@@ -35,7 +35,7 @@ class EvolutionaryAlg:
         self.worst = None
 
         # Defining the grammar used
-        X_vars = [[('x['+str(i)+']', 'T')] for i in range(X_size)]
+        X_vars = [[('x['+str(i)+']', 'T')] for i in range(n_features)]
         grammar_dic = {
             '<start>': [
                 [('<expr>', 'NT')]
@@ -68,7 +68,7 @@ class EvolutionaryAlg:
         }
 
         self.cfg = CFG(grammar_dic,
-                           X_size=X_size,
+                           n_features=n_features,
                            max_tree_depth=self.params['MAX_TREE_DEPTH'], 
                            min_tree_depth=self.params['MIN_TREE_DEPTH'],
                            shortest_path=shortest_path)
