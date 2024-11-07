@@ -16,7 +16,7 @@ class Experiment:
 
         self._default_config_indices = []
         self.configurations = []  # ExperimentConfigGroup list
-        self.results = ExperimentResult()
+        self.results = ExperimentResult(problem_type=problem_type)
 
         self._current_configuration_group_idx = 0  # Para controle de interrupções
         self._current_configuration_idx = 0  # Para controle de interrupções
@@ -35,13 +35,14 @@ class Experiment:
         self.X_test = X_test
         self.y_test = y_test
 
-        self.results = []
         self._current_configuration_group_idx = 0
         self._current_configuration_idx = 0
         self._current_absolute_idx = 0
 
         self.namespace = namespace if namespace else self.namespace
         self.problem_type = problem_type if problem_type else self.problem_type
+
+        self.results = ExperimentResult(problem_type=problem_type)
 
         self.save_backup = save_backup if save_backup else self.save_backup
         self.backup_folder = backup_folder if backup_folder else self.backup_folder
@@ -65,14 +66,17 @@ class Experiment:
 
     def run_all(self):
         # Carrega backup se existir
-        self._load_backup()
-
-        total_config_groups = len(self.configurations)
+        backup_existed = self._load_backup()
+            
         self.total_configurations = sum([len(config.configurations) for config in self.configurations])
-        self._current_absolute_idx = 0
+
+        if not backup_existed:
+            self._current_configuration_group_idx = 0
+            self._current_configuration_idx = 0
+            self._current_absolute_idx = 0
 
         with tqdm(total=self.total_configurations, desc="Configurations", position=0, leave=True) as config_pbar:
-            for group_idx in range(self._current_configuration_group_idx, total_config_groups):
+            for group_idx in range(self._current_configuration_group_idx, len(self.configurations)):
                 self._current_configuration_group_idx = group_idx
 
                 config_group = self.configurations[group_idx]
@@ -94,9 +98,9 @@ class Experiment:
                     # Executa a configuração com barra de Iterações
                     self._run_configuration(config)
 
+                    self._current_absolute_idx += 1
                     if self.save_backup:
                         self._save_backup()
-                    self._current_absolute_idx += 1
 
                 # Reseta o índice de configuração após cada grupo
                 self._current_configuration_idx = 0
@@ -120,39 +124,64 @@ class Experiment:
                 solver.fit(self.X_train, self.y_train)
                 prediction = solver.predict(self.X_test)
 
+                y_scores = None
+                if self.problem_type == 'classification':
+                    # Try to get predicted probabilities
+                    if hasattr(solver, 'predict_proba'):
+                        y_scores = solver.predict_proba(self.X_test)
+                    # If predict_proba is not available, try decision_function
+                    elif hasattr(solver, 'decision_function'):
+                        y_scores = solver.decision_function(self.X_test)
+                    else:
+                        # If neither method is available, y_scores remains None
+                        #print("Warning: Solver does not provide predict_proba or decision_function.") # TODO: ADD LOGGER
+                        pass
+
                 # Metrics
-                self.results.add_iteration(id_config, solver, prediction, self.y_test)
+                self.results.add_iteration(id_config, solver, prediction, self.y_test, y_scores, self.X_test)
 
         self.results.end_configuration(id_config)
                 
 
     def get_results(self):
-        return self.results
+        return self.results.get_results()
 
     def _save_backup(self):
         import pickle
         backup_data = {
+            '_current_configuration_group_idx': self._current_configuration_group_idx,
             '_current_configuration_idx': self._current_configuration_idx,
+            '_current_absolute_idx': self._current_absolute_idx,
+            'configurations': self.configurations,
             'results': self.results
         }
         backup_path = f"{self.backup_folder}/{self.backup_file}" if self.backup_folder else self.backup_file
         with open(backup_path, 'wb') as f:
             pickle.dump(backup_data, f)
 
+    def _delete_backup(self):
+        import os
+        backup_path = f"{self.backup_folder}/{self.backup_file}" if self.backup_folder else self.backup_file
+        if os.path.exists(backup_path):
+            os.remove(backup_path)
+
     def _load_backup(self):
         import os
         backup_path = f"{self.backup_folder}/{self.backup_file}" if self.backup_folder else self.backup_file
         if os.path.exists(backup_path):
             import pickle
-            with open(self.backup_file, 'rb') as f:
+            with open(self.backup_path, 'rb') as f:
                 backup_data = pickle.load(f)
+            self._current_configuration_group_idx = backup_data['_current_configuration_group_idx']
             self._current_configuration_idx = backup_data['_current_configuration_idx']
+            self._current_absolute_idx = backup_data['_current_absolute_idx']
+            self.configurations = backup_data['configurations']
             self.results = backup_data['results']
-            print(f"Retomando do backup na configuração {self._current_configuration_idx}")
+            #print(f"Retomando do backup na configuração {self._current_configuration_idx}") # TODO: ADD LOGGER
+            return True
         else:
-            print("Nenhum backup encontrado, iniciando do início")
-            self._current_configuration_idx = 0
-            self.results = []
+            #print("Nenhum backup encontrado, iniciando do início") # TODO: ADD LOGGER
+            return False
 
     def print_all_configurations(self):
         from itertools import product

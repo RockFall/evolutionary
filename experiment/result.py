@@ -1,19 +1,13 @@
 import pandas as pd
-from sklearn.metrics import (
-    mean_squared_error, root_mean_squared_error,mean_absolute_error, r2_score,
-    explained_variance_score, mean_absolute_percentage_error
-)
-from sklearn.utils.multiclass import type_of_target
-from sklearn.metrics import (
-    accuracy_score, f1_score, precision_score, recall_score,
-    confusion_matrix, classification_report, roc_auc_score,
+from sklearn.metrics import ( # type: ignore
+    mean_squared_error, root_mean_squared_error, mean_absolute_error, r2_score, explained_variance_score,
+    mean_absolute_percentage_error, accuracy_score, f1_score, precision_score,
+    recall_score, confusion_matrix, classification_report, roc_auc_score,
     roc_curve, precision_recall_curve, log_loss, cohen_kappa_score,
-    matthews_corrcoef, hamming_loss, jaccard_score, top_k_accuracy_score
-)
-from sklearn.metrics import (
+    matthews_corrcoef, hamming_loss, jaccard_score, top_k_accuracy_score,
     silhouette_score, calinski_harabasz_score, davies_bouldin_score
 )
-from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.multiclass import type_of_target # type: ignore
 import numpy as np
 import copy
 
@@ -146,9 +140,7 @@ class ExperimentResult:
         result_entry = {
             'config_id': config_id,
             'iteration': -1,
-            # same solver name as the last iteration
             'solver': config_iterations['solver'].iloc[-1],
-            # prediction of the one with least mse
             'prediction': best['prediction'],
             'y_true': best['y_true'],
             **mean_metrics,
@@ -260,3 +252,12 @@ class ExperimentResult:
         else:
             raise ValueError(f"Unsupported problem type: {self.problem_type}")
         return metrics
+    
+    def get_results(self):
+        """
+        Returns the results DataFrame.
+
+        Returns:
+            pd.DataFrame: Results DataFrame.
+        """
+        return self.results_df
